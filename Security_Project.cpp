@@ -12,25 +12,32 @@
 #include <openssl/evp.h>
 #include <openssl/evperr.h>
 #include <openssl/crypto.h>
+#include <openssl/sha.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+
+extern "C"
+{
+#include <openssl/applink.c>
+}
 
 using namespace std;
 
 #define BUFSIZE 1024
 
-int encrypt(unsigned char* plaintext, int plaintext_len, unsigned char* key,
-    unsigned char* iv, unsigned char* ciphertext);
-
-int decrypt(unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
-    unsigned char* iv, unsigned char* plaintext);
-
-int generateHash(const unsigned char* plain_text, unsigned int plain_text_length,
-    unsigned char* hash, unsigned int* hash_length);
-
+int encryptAES(unsigned char* plaintext, int plaintext_len, unsigned char* key,unsigned char* iv, unsigned char* ciphertext);
+int decryptAES(unsigned char* ciphertext, int ciphertext_len, unsigned char* key,unsigned char* iv, unsigned char* plaintext);
+int generateHash(const unsigned char* plain_text, unsigned int plain_text_length,unsigned char* hash, unsigned int* hash_length);
 void append(const unsigned char* text1, const unsigned char* text2, unsigned char* result);
+int encryptRSA(unsigned char* data, int dataLen, const char* keyFile, unsigned char* ciphertext);
+int decryptRSA(unsigned char* data, int dataLen, const char* KeyFile, unsigned char* decryptedtext);
+void hash_asym_sym(unsigned char* plainText, unsigned int plainTextLen, const char* privateKeyFile, unsigned char* result);
+void sign(unsigned char* plainText, unsigned int plainTextLen,const char* privateKeyFile, unsigned char* cipherHash, unsigned int* CipherHashSize);
+void print(unsigned char* text,unsigned int size);
 
 int main()
 {
-    /******************************** For Encryption/Decryption **********************************/
+    /******************************** For AES Encryption/Decryption **********************************/
     //unsigned char plaintext[] = "Hello, OpenSSL!";
     //unsigned char ciphertext[BUFSIZE];
     //unsigned char key[] = "0123456789abcdef";  // 128-bit key
@@ -53,45 +60,40 @@ int main()
     //decryptedtext[decryptedtext_len] = '\0';  // Null-terminate the decrypted text
     //printf("Decrypted text: %s\n", decryptedtext);
 
-    /**************************** For Hasing *******************************************************/
+    /**************************** For Signing *******************************************************/
     // A sample plain text
     unsigned char plainText[] = "hello";
     unsigned int plainSize = sizeof(plainText) - 1;
 
     // Generate hash value for the plain text using SHA512
-    unsigned char hashValue[EVP_MAX_MD_SIZE];
-    unsigned int hashSize;
-    bool status = generateHash(plainText, plainSize, hashValue, &hashSize);
-
-    if (status)
-    {
-        unsigned int resultSize = plainSize + hashSize;
-        unsigned char* result = new unsigned char[resultSize];
-        
-        // Call the append function
-        append(plainText, hashValue, result);
-
-        /*Display Hash Value*/
-        printf("Hash: ");
-        for (unsigned int i = 0; i < hashSize; i++) {
-            printf("%02x", hashValue[i]);
-        }
-        printf("\n");
-
-        /*Display plain text + hash value after appending*/
-        cout << "Plain + Hash: ";
-        for (unsigned int i = 0; i < resultSize; i++) {
-            printf("%02x", result[i]);
-        }
-        cout << endl;
-    }
+    unsigned char* cipherHash = nullptr;
+    unsigned int CipherHashSize = 0;
+    
+    // Paths to your public and private key files
+    const char* publicKeyFile = "public.pem";
+    const char* privateKeyFile = "private.pem";
+    
+    sign(plainText, plainSize, privateKeyFile, cipherHash, &CipherHashSize);
+    print(cipherHash, CipherHashSize);
     /************************************************************************************************/
 
-    return 0;
+    /***************************** For Verifying ***************************************************/
+
+    /**********************************************************************************************/
+
+    /**************************** For Encryption + Sign ******************************************/
+
+    /*********************************************************************************************/
+
+    /**************************** For Verify + Decryption ****************************************/
+
+    /********************************************************************************************/
+
+    /**************************** For Encryption + Sign + Verify + Decryption *********************/
 }
 
 /* Function to encrypt data */
-int encrypt(unsigned char* plaintext, int plaintext_len, unsigned char* key,
+int encryptAES(unsigned char* plaintext, int plaintext_len, unsigned char* key,
     unsigned char* iv, unsigned char* ciphertext)
 {
     EVP_CIPHER_CTX* ctx;
@@ -122,7 +124,7 @@ int encrypt(unsigned char* plaintext, int plaintext_len, unsigned char* key,
 }
 
 /* Function to decrypt data */
-int decrypt(unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
+int decryptAES(unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
     unsigned char* iv, unsigned char* plaintext)
 {
     EVP_CIPHER_CTX* ctx;
@@ -194,16 +196,159 @@ int generateHash(const unsigned char* plain_text, unsigned int plain_text_length
     return true;
 }
 
+
 void append(const unsigned char* text1, const unsigned char* text2, unsigned char* result)
 {
     // Determine the lengths of the strings
-    size_t len1 = strlen(reinterpret_cast<const char*>(text1));
-    size_t len2 = strlen(reinterpret_cast<const char*>(text2));
+    size_t len1 = strlen((const char*)text1);
+    size_t len2 = strlen((const char*)text2);
 
     // Copy the first string into the result array
-    strcpy(reinterpret_cast<char*>(result), reinterpret_cast<const char*>(text1));
+    strcpy((char*)result, (const char*)text1);
 
     // Concatenate the second string to the result array
-    strcat(reinterpret_cast<char*>(result), reinterpret_cast<const char*>(text2));
+    strcat((char*)result, (const char*)text2);
 }
 
+/* Function to encrypt data using RSA */
+/* Function to encrypt data using RSA */
+int encryptRSA(unsigned char* plaintext, int plaintext_len, const char* publicKeyFile, unsigned char* ciphertext)
+{
+    size_t rsa_ciphertext_len;
+    FILE* publicKey;
+    fopen_s(&publicKey, publicKeyFile, "rb");
+    if (!publicKey) {
+        perror("Error opening public key file");
+        exit(EXIT_FAILURE);
+    }
+
+    EVP_PKEY* evp_key = PEM_read_PUBKEY(publicKey, NULL, NULL, NULL);
+    if (!evp_key) {
+        perror("Error reading public key");
+        exit(EXIT_FAILURE);
+    }
+
+    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(evp_key, NULL);
+    if (!ctx) {
+        perror("Error creating context");
+        exit(EXIT_FAILURE);
+    }
+
+    if (EVP_PKEY_encrypt_init(ctx) <= 0 || EVP_PKEY_encrypt(ctx, ciphertext, &rsa_ciphertext_len, plaintext, plaintext_len) <= 0) {
+        perror("Error during encryption");
+        exit(EXIT_FAILURE);
+    }
+
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(evp_key);
+    fclose(publicKey);
+
+    return rsa_ciphertext_len;
+}
+
+/* Function to decrypt data using RSA */
+int decryptRSA(unsigned char* ciphertext, int ciphertext_len, const char* privateKeyFile, unsigned char* decryptedtext)
+{
+    FILE* privateKey;
+    fopen_s(&privateKey, privateKeyFile, "rb");
+    if (!privateKey) {
+        perror("Error opening private key file");
+        exit(EXIT_FAILURE);
+    }
+
+    EVP_PKEY* evp_key = PEM_read_PrivateKey(privateKey, NULL, NULL, NULL);
+    if (!evp_key) {
+        perror("Error reading private key");
+        exit(EXIT_FAILURE);
+    }
+
+    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(evp_key, NULL);
+    if (!ctx) {
+        perror("Error creating context");
+        exit(EXIT_FAILURE);
+    }
+
+    size_t decryptedtext_len = 0;
+    if (EVP_PKEY_decrypt_init(ctx) <= 0 || EVP_PKEY_decrypt(ctx, NULL, &decryptedtext_len, ciphertext, ciphertext_len) <= 0) {
+        perror("Error during decryption (getting buffer size)");
+        exit(EXIT_FAILURE);
+    }
+
+    if (EVP_PKEY_decrypt(ctx, decryptedtext, &decryptedtext_len, ciphertext, ciphertext_len) <= 0) {
+        perror("Error during decryption");
+        exit(EXIT_FAILURE);
+    }
+
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(evp_key);
+    fclose(privateKey);
+
+    // Null-terminate the decrypted text
+    decryptedtext[decryptedtext_len] = '\0';
+
+    return decryptedtext_len;
+}
+
+
+/* 
+   1- Generate hash value for the plain text using SHA512
+   2- Encrypt hash in RSA using private key
+   Both steps 1 and 2 are Sign stage
+   3- Encrypt plain using AES (Encryption)
+   4- Append encrypted hash with encrypted plain 
+*/
+void hash_asym_sym(unsigned char* plainText, unsigned int plainTextLen,
+                   const char* privateKeyFile,unsigned char* result)
+{
+    unsigned char hashValue[EVP_MAX_MD_SIZE];
+    unsigned int hashSize;
+    
+    /* Generate hash value for the plain text using SHA512 */
+    generateHash(plainText, plainTextLen, hashValue, &hashSize);
+
+    unsigned char* cipherHash = new unsigned char[hashSize];
+    unsigned char* cipherText = new unsigned char[plainTextLen];
+
+    /* Encrypt Plain Text Using AES*/
+
+    /* Encrypt the hash using the private key */ 
+    encryptRSA(hashValue, hashSize, privateKeyFile, cipherHash);
+
+    /* Append the encrypted plainText with the encrypted hash value (This is the data sent) */
+    append(cipherText, cipherHash, result);
+
+    delete[]cipherHash;
+    delete[]cipherText;
+}
+
+/*
+* 1- Generate hash value for the plain text using SHA512
+  2- Encrypt hash in RSA using private key
+*/
+void sign(unsigned char* plainText, unsigned int plainTextLen,
+          const char* privateKeyFile, unsigned char* cipherHash, unsigned int* CipherHashSize)
+{
+    unsigned char hashValue[EVP_MAX_MD_SIZE];
+    unsigned int hashSize;
+
+
+    /* Generate hash value for the plain text using SHA512 */
+    generateHash(plainText, plainTextLen, hashValue, &hashSize);
+
+    *CipherHashSize = hashSize;
+    cipherHash = new unsigned char[*CipherHashSize];
+
+    /* Encrypt the hash using the private key */
+    encryptRSA(hashValue, hashSize, privateKeyFile, cipherHash);
+
+}
+
+void print(unsigned char* text, unsigned int size)
+{
+    printf("Result is: ");
+    for (unsigned int i = 0; i < size; i++)
+    {
+        printf("%02x", text[i]);
+    }
+    printf("\n");
+}
