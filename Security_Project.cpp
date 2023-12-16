@@ -25,8 +25,10 @@ int encrypt(unsigned char* plaintext, int plaintext_len, unsigned char* key,
 int decrypt(unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
     unsigned char* iv, unsigned char* plaintext);
 
-unsigned char* generateHash(const unsigned char* plain_text, size_t length);
+void generateHash(const unsigned char* plain_text, size_t length, unsigned char*);
 
+void append(unsigned char* plainText, unsigned int plainSize,
+    unsigned char* encryptedHash);
 
 
 /* Function to encrypt data */
@@ -96,15 +98,16 @@ int decrypt(unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
 
 
 // A function that uses SHA512 in open ssl and prints the hash value of the plain text
-unsigned char* generateHash(const unsigned char* plain_text, size_t length) {
+void generateHash(const unsigned char* plain_text, size_t length, 
+                            unsigned char* hash)
+{
     // Create a SHA512_CTX object to store the context of the hashing operation
     SHA512_CTX ctx;
     // Initialize the context
     SHA512_Init(&ctx);
     // Update the context with the plain text data and its length
     SHA512_Update(&ctx, plain_text, length);
-    // Create a buffer to store the output hash
-    unsigned char hash[SHA512_DIGEST_LENGTH];
+
     // Finalize the context and store the hash in the buffer
     SHA512_Final(hash, &ctx);
     
@@ -113,16 +116,22 @@ unsigned char* generateHash(const unsigned char* plain_text, size_t length) {
         printf("%02x", hash[i]);
     }
     printf("\n");
-
-    return hash;
 }
 
 
-///* Append the plain text with the generated hash value from SHA512 */
-//void append()
-//{
-//
-//}
+/* Append the plain text with the generated hash value from SHA512 */
+void append(unsigned char* plainText, unsigned int plainSize, 
+            unsigned char* encryptedHash)
+{
+    // Print the plainText
+    for (unsigned int i = 0; i < plainSize; i++) {
+        printf("%c", plainText[i]);
+    }
+    // Print the encrypted hash value
+    for (unsigned int i = 0; i < SHA512_DIGEST_LENGTH; i++) {
+        printf("%02x", encryptedHash[i]);
+    }
+}
 
 
 
@@ -154,8 +163,13 @@ int main()
 
     /* Sign */
     // A sample plain text
-    unsigned char plain_text[] = "Hello World!";
-    // Call the sign function with the plain text and its length
-    unsigned char* hash = generateHash(plain_text, sizeof(plain_text) - 1);
-    //append(plain_text, )
+    unsigned char plainText[] = "Hello World!";
+    unsigned int plainSize = sizeof(plainText) - 1;
+
+    // Generate hash value for the plain text using SHA512
+    unsigned char hashValue[SHA512_DIGEST_LENGTH];
+    generateHash(plainText, plainSize, hashValue);
+
+    /* Append the plainText with the encrypted hash value (This is the data sent) */
+    append(plainText, plainSize, hashValue);
 }
