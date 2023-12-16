@@ -1,0 +1,4 @@
+product_id,category,name,description,price,stock_level
+12345,Clothing,T-Shirt,Cotton T-Shirt with Logo,24.99,100
+67890,Electronics,Headphones,Wireless Noise-Cancelling Headphones,199.99,50
+09876,Books,Mystery,The Case of the Missing Manuscript,15.99,20
