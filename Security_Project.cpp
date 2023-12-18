@@ -34,35 +34,51 @@ int decryptRSA(unsigned char* data, int dataLen, const char* KeyFile, unsigned c
 void hash_asym_sym(unsigned char* plainText, unsigned int plainTextLen, const char* privateKeyFile, unsigned char* result);
 void sign(unsigned char* plainText, unsigned int plainTextLen, const char* privateKeyFile, unsigned char* cipherHash, unsigned int* CipherHashSize);
 void print(unsigned char* text, unsigned int size);
+bool verifyRSASignature(const unsigned char* data, unsigned int dataLen,
+    const char* publicKeyFile, const unsigned char* signature,
+    size_t* signatureLen);
+void signRSA(const unsigned char* data, unsigned int dataLen,
+    const char* privateKeyFile, unsigned char* signature,
+    size_t* signatureLen);
+bool verifySignature(const unsigned char* plainText, unsigned int plainTextLen,
+    const char* publicKeyFile, const unsigned char* signature,
+    size_t* signatureLen);
+void signData(const unsigned char* plainText, unsigned int plainTextLen,
+    const char* privateKeyFile, unsigned char* signature,
+    size_t* signatureLen);
 
-int main()
-{
-    unsigned char plaintext[] = "Hello, OpenSSL!";
-    unsigned char rsa_ciphertext[BUFSIZE];
-    unsigned char rsa_decryptedtext[BUFSIZE];
+
+
+int main() {
+    // Plain text to be signed
+    const unsigned char plaintext[] = "Hello, Sign and Verify with OpenSSL!";
 
     // Paths to your public and private key files
     const char* publicKeyFile = "public.pem";
     const char* privateKeyFile = "private.pem";
 
-    int plaintext_len = strlen((char*)plaintext);
-    int rsa_ciphertext_len;
+    // Variables to store the signature and its length
+    unsigned char signature[4096];  // Adjust the size based on your key size
+    size_t signatureLen;
 
-    /* RSA Encryption */
-    rsa_ciphertext_len = encryptRSA(plaintext, plaintext_len, publicKeyFile, rsa_ciphertext);
-    printf("RSA Ciphertext: ");
-    for (int i = 0; i < rsa_ciphertext_len; i++) {
-        printf("%02x", rsa_ciphertext[i]);
+    // Sign the data
+    signData(plaintext, strlen((const char*)plaintext), privateKeyFile, signature, &signatureLen);
+    printf("Signature created successfully.\n");
+
+    // Verify the signature
+    bool verificationResult = verifySignature(plaintext, strlen((const char*)plaintext), publicKeyFile, signature, &signatureLen);
+
+    // Print the verification result
+    if (verificationResult) {
+        printf("Signature verified successfully.\n");
     }
-    printf("\n");
-
-    /* RSA Decryption */
-    int rsa_decryptedtext_len = decryptRSA(rsa_ciphertext, rsa_ciphertext_len, privateKeyFile, rsa_decryptedtext);
-    rsa_decryptedtext[rsa_decryptedtext_len] = '\0';  // Null-terminate the decrypted text
-    printf("RSA Decrypted text: %s\n", rsa_decryptedtext);
+    else {
+        printf("Signature verification failed.\n");
+    }
 
     return 0;
 }
+
 
 /* Function to encrypt data */
 int encryptAES(unsigned char* plaintext, int plaintext_len, unsigned char* key,
@@ -323,4 +339,107 @@ void print(unsigned char* text, unsigned int size)
         printf("%02x", text[i]);
     }
     printf("\n");
+}
+/* Function to sign data */
+void signData(const unsigned char* plainText, unsigned int plainTextLen,
+    const char* privateKeyFile, unsigned char* signature,
+    size_t* signatureLen) {
+    unsigned char hashValue[EVP_MAX_MD_SIZE];
+    unsigned int hashSize;
+
+    /* Generate hash value for the plain text using SHA512 */
+    generateHash(plainText, plainTextLen, hashValue, &hashSize);
+
+    /* Sign the hash using the private key */
+    signRSA(hashValue, hashSize, privateKeyFile, signature, signatureLen);
+}
+
+/* Function to verify the signature */
+bool verifySignature(const unsigned char* plainText, unsigned int plainTextLen,
+    const char* publicKeyFile, const unsigned char* signature,
+    size_t* signatureLen) {
+    unsigned char hashValue[EVP_MAX_MD_SIZE];
+    unsigned int hashSize;
+
+    /* Generate hash value for the plain text using SHA512 */
+    generateHash(plainText, plainTextLen, hashValue, &hashSize);
+
+    /* Verify the signature using the public key */
+    return verifyRSASignature(hashValue, hashSize, publicKeyFile, signature, signatureLen);
+}
+
+/* Function to sign data using RSA */
+void signRSA(const unsigned char* data, unsigned int dataLen,
+    const char* privateKeyFile, unsigned char* signature,
+    size_t* signatureLen) {
+    FILE* privateKey;
+    fopen_s(&privateKey, privateKeyFile, "rb");
+    if (!privateKey) {
+        perror("Error opening private key file");
+        exit(EXIT_FAILURE);
+    }
+
+    EVP_PKEY* evp_key = PEM_read_PrivateKey(privateKey, NULL, NULL, NULL);
+    if (!evp_key) {
+        perror("Error reading private key");
+        exit(EXIT_FAILURE);
+    }
+
+    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(evp_key, NULL);
+    if (!ctx) {
+        perror("Error creating context");
+        exit(EXIT_FAILURE);
+    }
+
+    if (EVP_PKEY_sign_init(ctx) <= 0 ||
+        EVP_PKEY_sign(ctx, signature, signatureLen, data, dataLen) <= 0) {
+        perror("Error during signing");
+        exit(EXIT_FAILURE);
+    }
+
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(evp_key);
+    fclose(privateKey);
+}
+
+/* Function to verify the signature using RSA */
+bool verifyRSASignature(const unsigned char* data, unsigned int dataLen,
+    const char* publicKeyFile, const unsigned char* signature,
+    size_t* signatureLen) {
+    FILE* publicKey;
+    fopen_s(&publicKey, publicKeyFile, "rb");
+    if (!publicKey) {
+        perror("Error opening public key file");
+        exit(EXIT_FAILURE);
+    }
+
+    EVP_PKEY* evp_key = PEM_read_PUBKEY(publicKey, NULL, NULL, NULL);
+    if (!evp_key) {
+        perror("Error reading public key");
+        exit(EXIT_FAILURE);
+    }
+
+    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(evp_key, NULL);
+    if (!ctx) {
+        perror("Error creating context");
+        exit(EXIT_FAILURE);
+    }
+
+    int result = EVP_PKEY_verify_init(ctx);
+    if (result <= 0) {
+        perror("Error initializing verification context");
+        exit(EXIT_FAILURE);
+    }
+
+    result = EVP_PKEY_verify(ctx, signature, *signatureLen, data, dataLen);
+    if (result < 0) {
+        perror("Error during verification");
+        exit(EXIT_FAILURE);
+    }
+
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(evp_key);
+    fclose(publicKey);
+
+    return result == 1; // 1 indicates successful verification, 0 or negative values indicate failure
 }
