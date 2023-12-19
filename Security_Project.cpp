@@ -38,12 +38,15 @@ void sign(unsigned char* plainText, unsigned int plainTextLen, const char* priva
 void print(unsigned char* text, unsigned int size);
 bool verifyRSASignature(const unsigned char* data, unsigned int dataLen, const char* publicKeyFile, const unsigned char* signature, size_t* signatureLen);
 void signRSA(const unsigned char* data, unsigned int dataLen, const char* privateKeyFile, unsigned char* signature, size_t* signatureLen);
-bool verifySignature(const unsigned char* plainText, unsigned int plainTextLen, const char* publicKeyFile, const unsigned char* signature, size_t* signatureLen);
+void verifySignature(const unsigned char* plainText, unsigned int plainTextLen, const char* publicKeyFile, const unsigned char* signature, size_t* signatureLen);
 void signData(const unsigned char* plainText, unsigned int plainTextLen, const char* privateKeyFile, unsigned char* signature, size_t* signatureLen);
 unsigned char* get_string();
 void generate_key(void);
+void getKey(unsigned char* key, int size);
 
 int main() {
+    const char* publicKeyFile = "public.pem";
+    const char* privateKeyFile = "private.pem";
     unsigned char* plaintext;
     plaintext = get_string();
     char option;
@@ -54,41 +57,59 @@ int main() {
         cin >> option;
         if (option == '1')
         {
-            /* encrypt/decrypt */   
-            
+            unsigned char cipherText[4096];
+            unsigned char decryptedText[sizeof(plaintext)];
+            unsigned char key[16];    /* AES key size = 16Bytes */
+            getKey(key, sizeof(key));
+            /* Encryption */
+            encrypt(plaintext, key, cipherText);
+            int ciphertextLen = strlen((char*)cipherText);
+            print(cipherText, ciphertextLen);
+            /* Decryption */
+            decrypt(cipherText, key, decryptedText);
+            printf("Decrypted text: %s\n", decryptedText);
         }
         else if (option == '2')
         {
             /* sign/verify */
             generate_key();
-            const char* publicKeyFile = "public.pem";
-            const char* privateKeyFile = "private.pem";
             unsigned char signature[4096];  // Adjust the size based on your key size
             size_t signatureLen;
+
             /* Sign the data */
             signData(plaintext, strlen((const char*)plaintext), privateKeyFile, signature, &signatureLen);
-            printf("Signature created successfully.\n");
-
+            
             /* Verify the signature */
-            bool verificationResult = verifySignature(plaintext, strlen((const char*)plaintext), publicKeyFile, signature, &signatureLen);
-
-            /* Print the verification result */
-            if (verificationResult) {
-                printf("Signature verified successfully.\n");
-            }
-            else {
-                printf("Signature verification failed.\n");
-            }
+            verifySignature(plaintext, strlen((const char*)plaintext), publicKeyFile, signature, &signatureLen);
         }
         else if (option == '3')
         {
-            /* sign + encrypt/verify + decrypt */
+            unsigned char signature[256];  // Adjust the size based on your key size
+            unsigned char sigCipher[4096];
+            unsigned char key[16];    /* AES key size = 16Bytes */
+            unsigned char decryptedSig[256];
+            size_t signatureLen;
+            unsigned int plainTextLen = strlen((const char*)plaintext);
+
+            generate_key();
+            /* sign */
+            signData(plaintext, plainTextLen, privateKeyFile, signature, &signatureLen);
+            printf("Signaure: ");
+            print(signature, signatureLen);
+            getKey(key, sizeof(key));
+            /* encrypt */
+            encrypt(signature, key, sigCipher);
+            printf("encrypted hash: %x", sigCipher);
+            /* decrypt */
+            decrypt(sigCipher, key, decryptedSig);
+            /* verify */
+            verifySignature(decryptedSig, plainTextLen, publicKeyFile, decryptedSig, &signatureLen);
         }
         else
         {
-            printf("Invalid input\n");
+            printf("Invalid input");
         }
-        printf("Choose another operation(y/n)\n");
+        printf("\nChoose another operation(y/n)");
         cin >> choice;
     } while (choice == 'y' || choice == 'Y');
     return 0;
@@ -356,7 +377,6 @@ void sign(unsigned char* plainText, unsigned int plainTextLen,
 
 void print(unsigned char* text, unsigned int size)
 {
-    printf("Result is: ");
     for (unsigned int i = 0; i < size; i++)
     {
         printf("%02x", text[i]);
@@ -375,10 +395,11 @@ void signData(const unsigned char* plainText, unsigned int plainTextLen,
 
     /* Sign the hash using the private key */
     signRSA(hashValue, hashSize, privateKeyFile, signature, signatureLen);
+    printf("Signature created successfully.\n");
 }
 
 /* Function to verify the signature */
-bool verifySignature(const unsigned char* plainText, unsigned int plainTextLen,
+void verifySignature(const unsigned char* plainText, unsigned int plainTextLen,
     const char* publicKeyFile, const unsigned char* signature,
     size_t* signatureLen) {
     unsigned char hashValue[EVP_MAX_MD_SIZE];
@@ -388,7 +409,14 @@ bool verifySignature(const unsigned char* plainText, unsigned int plainTextLen,
     generateHash(plainText, plainTextLen, hashValue, &hashSize);
 
     /* Verify the signature using the public key */
-    return verifyRSASignature(hashValue, hashSize, publicKeyFile, signature, signatureLen);
+    bool verificationResult = verifyRSASignature(hashValue, hashSize, publicKeyFile, signature, signatureLen);
+    /* Print the verification result */
+    if (verificationResult) {
+        printf("\nSignature verified successfully.\n");
+    }
+    else {
+        printf("\nSignature verification failed.\n");
+    }
 }
 
 /* Function to sign data using RSA */
@@ -489,4 +517,13 @@ void generate_key(void)
     int result = system(key);
     const char* keyGen = "openssl rsa -pubout -in private.pem -out public.pem";
     result = system(keyGen);
+}
+
+void getKey(unsigned char* key, int size)
+{
+    cout << "Enter the shared key (16 char): ";
+    for (int i = 0; i < size; i++)
+    {
+        cin >> key[i];
+    }
 }
