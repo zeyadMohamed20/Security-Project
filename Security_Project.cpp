@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <cstring>
 #include <vector>
+#include <fstream>
+#include <stdlib.h>
 
 #include <openssl/aes.h>
 #include <openssl/err.h>
@@ -25,8 +27,8 @@ using namespace std;
 
 #define BUFSIZE 1024
 
-int encryptAES(unsigned char* plaintext, int plaintext_len, unsigned char* key, unsigned char* iv, unsigned char* ciphertext);
-int decryptAES(unsigned char* ciphertext, int ciphertext_len, unsigned char* key, unsigned char* iv, unsigned char* plaintext);
+void encrypt(unsigned char* plaintext, unsigned char* key, unsigned char* ciphertext);
+void decrypt(unsigned char* ciphertext, unsigned char* key, unsigned char* plaintext);
 int generateHash(const unsigned char* plain_text, unsigned int plain_text_length, unsigned char* hash, unsigned int* hash_length);
 void append(const unsigned char* text1, const unsigned char* text2, unsigned char* result);
 int encryptRSA(unsigned char* data, int dataLen, const char* keyFile, unsigned char* ciphertext);
@@ -34,60 +36,77 @@ int decryptRSA(unsigned char* data, int dataLen, const char* KeyFile, unsigned c
 void hash_asym_sym(unsigned char* plainText, unsigned int plainTextLen, const char* privateKeyFile, unsigned char* result);
 void sign(unsigned char* plainText, unsigned int plainTextLen, const char* privateKeyFile, unsigned char* cipherHash, unsigned int* CipherHashSize);
 void print(unsigned char* text, unsigned int size);
-bool verifyRSASignature(const unsigned char* data, unsigned int dataLen,
-    const char* publicKeyFile, const unsigned char* signature,
-    size_t* signatureLen);
-void signRSA(const unsigned char* data, unsigned int dataLen,
-    const char* privateKeyFile, unsigned char* signature,
-    size_t* signatureLen);
-bool verifySignature(const unsigned char* plainText, unsigned int plainTextLen,
-    const char* publicKeyFile, const unsigned char* signature,
-    size_t* signatureLen);
-void signData(const unsigned char* plainText, unsigned int plainTextLen,
-    const char* privateKeyFile, unsigned char* signature,
-    size_t* signatureLen);
-
-
+bool verifyRSASignature(const unsigned char* data, unsigned int dataLen, const char* publicKeyFile, const unsigned char* signature, size_t* signatureLen);
+void signRSA(const unsigned char* data, unsigned int dataLen, const char* privateKeyFile, unsigned char* signature, size_t* signatureLen);
+bool verifySignature(const unsigned char* plainText, unsigned int plainTextLen, const char* publicKeyFile, const unsigned char* signature, size_t* signatureLen);
+void signData(const unsigned char* plainText, unsigned int plainTextLen, const char* privateKeyFile, unsigned char* signature, size_t* signatureLen);
+unsigned char* get_string();
+void generate_key(void);
 
 int main() {
-    // Plain text to be signed
-    const unsigned char plaintext[] = "Hello, Sign and Verify with OpenSSL!";
+    unsigned char* plaintext;
+    plaintext = get_string();
+    char option;
+    char choice;
+    do
+    {
+        printf("(1) Encrypt/Decrypt using AES128\n(2) Sign/Veify using RSA\n(3) Sign + encrypt/verify + decrypt\n");
+        cin >> option;
+        if (option == '1')
+        {
+            /* encrypt/decrypt */   
+            
+        }
+        else if (option == '2')
+        {
+            /* sign/verify */
+            generate_key();
+            const char* publicKeyFile = "public.pem";
+            const char* privateKeyFile = "private.pem";
+            unsigned char signature[4096];  // Adjust the size based on your key size
+            size_t signatureLen;
+            /* Sign the data */
+            signData(plaintext, strlen((const char*)plaintext), privateKeyFile, signature, &signatureLen);
+            printf("Signature created successfully.\n");
 
-    // Paths to your public and private key files
-    const char* publicKeyFile = "public.pem";
-    const char* privateKeyFile = "private.pem";
+            /* Verify the signature */
+            bool verificationResult = verifySignature(plaintext, strlen((const char*)plaintext), publicKeyFile, signature, &signatureLen);
 
-    // Variables to store the signature and its length
-    unsigned char signature[4096];  // Adjust the size based on your key size
-    size_t signatureLen;
-
-    // Sign the data
-    signData(plaintext, strlen((const char*)plaintext), privateKeyFile, signature, &signatureLen);
-    printf("Signature created successfully.\n");
-
-    // Verify the signature
-    bool verificationResult = verifySignature(plaintext, strlen((const char*)plaintext), publicKeyFile, signature, &signatureLen);
-
-    // Print the verification result
-    if (verificationResult) {
-        printf("Signature verified successfully.\n");
-    }
-    else {
-        printf("Signature verification failed.\n");
-    }
-
+            /* Print the verification result */
+            if (verificationResult) {
+                printf("Signature verified successfully.\n");
+            }
+            else {
+                printf("Signature verification failed.\n");
+            }
+        }
+        else if (option == '3')
+        {
+            /* sign + encrypt/verify + decrypt */
+        }
+        else
+        {
+            printf("Invalid input\n");
+        }
+        printf("Choose another operation(y/n)\n");
+        cin >> choice;
+    } while (choice == 'y' || choice == 'Y');
     return 0;
 }
 
 
 /* Function to encrypt data */
-int encryptAES(unsigned char* plaintext, int plaintext_len, unsigned char* key,
-    unsigned char* iv, unsigned char* ciphertext)
+void encrypt(unsigned char* plaintext, unsigned char* key,
+    unsigned char* ciphertext)
 {
+    int plaintext_len = strlen((char*)plaintext);
+
     EVP_CIPHER_CTX* ctx;
     int len;
 
     int ciphertext_len;
+
+    unsigned char iv[] = "\0";
 
     /* Create and initialize the context */
     ctx = EVP_CIPHER_CTX_new();
@@ -108,17 +127,21 @@ int encryptAES(unsigned char* plaintext, int plaintext_len, unsigned char* key,
     /* Clean up */
     EVP_CIPHER_CTX_free(ctx);
 
-    return ciphertext_len;
+    ciphertext[ciphertext_len] = '\0';
 }
 
 /* Function to decrypt data */
-int decryptAES(unsigned char* ciphertext, int ciphertext_len, unsigned char* key,
-    unsigned char* iv, unsigned char* plaintext)
+void decrypt(unsigned char* ciphertext, unsigned char* key,
+    unsigned char* plaintext)
 {
+    int ciphertext_len = strlen((char*)ciphertext);
+
     EVP_CIPHER_CTX* ctx;
     int len;
 
     int plaintext_len;
+
+    unsigned char iv[] = "\0";
 
     /* Create and initialize the context */
     ctx = EVP_CIPHER_CTX_new();
@@ -139,7 +162,7 @@ int decryptAES(unsigned char* ciphertext, int ciphertext_len, unsigned char* key
     /* Clean up */
     EVP_CIPHER_CTX_free(ctx);
 
-    return plaintext_len;
+    plaintext[plaintext_len] = '\0';  // Null-terminate the decrypted text
 }
 
 // A function that uses SHA512 in OpenSSL and prints the hash value of the plain text
@@ -442,4 +465,28 @@ bool verifyRSASignature(const unsigned char* data, unsigned int dataLen,
     fclose(publicKey);
 
     return result == 1; // 1 indicates successful verification, 0 or negative values indicate failure
+}
+
+
+unsigned char* get_string() {
+    char buffer[BUFSIZ];
+    printf("Enter a string: ");
+    fgets(buffer, 100, stdin);
+    size_t len = sizeof(buffer) - 1;
+    unsigned char* array = new unsigned char[len];
+    if (array == NULL) {
+        printf("Memory allocation failed\n");
+        exit(1);
+    }
+    memcpy(array, buffer, len);
+    return array;
+}
+
+void generate_key(void)
+{
+    /* generate RSA 2 keys in file private.pem and publiv.pem*/
+    const char* key = "openssl genpkey -algorithm RSA -out private.pem";
+    int result = system(key);
+    const char* keyGen = "openssl rsa -pubout -in private.pem -out public.pem";
+    result = system(keyGen);
 }
