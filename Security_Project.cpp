@@ -27,8 +27,8 @@ using namespace std;
 
 #define BUFSIZE 1024
 
-void encrypt(unsigned char* plaintext, unsigned char* key, unsigned char* ciphertext);
-void decrypt(unsigned char* ciphertext, unsigned char* key, unsigned char* plaintext);
+void encrypt(unsigned char* inFile, unsigned char* outFile, unsigned char* key_str);
+void decrypt(unsigned char* inFile, unsigned char* outFile, unsigned char* key_str);
 int generateHash(const unsigned char* plain_text, unsigned int plain_text_length, unsigned char* hash, unsigned int* hash_length);
 void append(const unsigned char* text1, const unsigned char* text2, unsigned char* result);
 int encryptRSA(unsigned char* data, int dataLen, const char* keyFile, unsigned char* ciphertext);
@@ -48,41 +48,46 @@ int main() {
     const char* publicKeyFile = "public.pem";
     const char* privateKeyFile = "private.pem";
     unsigned char* plaintext;
-    plaintext = get_string();
     char option;
     char choice;
     do
     {
-        printf("(1) Encrypt/Decrypt using AES128\n(2) Sign/Veify using RSA\n(3) Sign + encrypt/verify + decrypt\n");
-        cin >> option;
+        printf("Enter the plain text: ");
+        plaintext = get_string();
+        printf("(1) Encrypt using AES\n(2) Decrypt using AES\n(3) Sign using RSA\n(4) Veify using RSA\n(5) Sign + encrypt\n(6) Verify + decrypt\n");
+        scanf_s("%c", &option);
         if (option == '1')
-        {
-            unsigned char cipherText[4096];
-            unsigned char decryptedText[sizeof(plaintext)];
-            unsigned char key[16];    /* AES key size = 16Bytes */
-            getKey(key, sizeof(key));
-            /* Encryption */
-            encrypt(plaintext, key, cipherText);
-            int ciphertextLen = strlen((char*)cipherText);
-            print(cipherText, ciphertextLen);
-            /* Decryption */
-            decrypt(cipherText, key, decryptedText);
-            printf("Decrypted text: %s\n", decryptedText);
+        {            
+            unsigned char* fileIn = get_string();          
+            unsigned char* fileOut = get_string();            
+            unsigned char* key = get_string();
+            encrypt(fileIn, fileOut, key);
         }
         else if (option == '2')
+        {               
+            unsigned char* fileIn = get_string();            
+            unsigned char* fileOut = get_string();            
+            unsigned char* key = get_string();
+            decrypt(fileIn, fileOut, key);
+        }
+        else if (option == '3')
         {
-            /* sign/verify */
             generate_key();
+            /* sign */            
             unsigned char signature[4096];  // Adjust the size based on your key size
             size_t signatureLen;
 
             /* Sign the data */
-            signData(plaintext, strlen((const char*)plaintext), privateKeyFile, signature, &signatureLen);
-
+            signData(plaintext, strlen((const char*)plaintext), privateKeyFile, signature, &signatureLen);            
+        }
+        else if (option == '4')
+        {
+            unsigned char signature[4096];  // Adjust the size based on your key size
+            size_t signatureLen;
             /* Verify the signature */
             verifySignature(plaintext, strlen((const char*)plaintext), publicKeyFile, signature, &signatureLen);
         }
-        else if (option == '3')
+        else if (option == '5')
         {
             unsigned char signature[256];  // Adjust the size based on your key size
             unsigned char sigCipher[4096];
@@ -116,75 +121,24 @@ int main() {
 }
 
 
-/* Function to encrypt data */
-void encrypt(unsigned char* plaintext, unsigned char* key,
-    unsigned char* ciphertext)
+
+void encrypt(unsigned char* inFile, unsigned char* outFile, unsigned char* key_str)
 {
-    int plaintext_len = strlen((char*)plaintext);
-
-    EVP_CIPHER_CTX* ctx;
-    int len;
-
-    int ciphertext_len;
-
-    unsigned char iv[] = "\0";
-
-    /* Create and initialize the context */
-    ctx = EVP_CIPHER_CTX_new();
-
-    /* Initialize the cipher for encryption */
-    EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv);
-
-    /* Provide the plaintext to be encrypted */
-    EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len);
-
-    ciphertext_len = len;
-
-    /* Finalize the encryption */
-    EVP_EncryptFinal_ex(ctx, ciphertext + len, &len);
-
-    ciphertext_len += len;
-
-    /* Clean up */
-    EVP_CIPHER_CTX_free(ctx);
-
-    ciphertext[ciphertext_len] = '\0';
+    char command[1024];
+    sprintf_s(command, "openssl enc -aes-256-cbc -salt -pbkdf2 -in %s -out %s -k %s", inFile, outFile, key_str);
+    system(command);
+    printf("\nEncryption is done");
 }
 
-/* Function to decrypt data */
-void decrypt(unsigned char* ciphertext, unsigned char* key,
-    unsigned char* plaintext)
+void decrypt(unsigned char* inFile, unsigned char* outFile, unsigned char* key_str)
 {
-    int ciphertext_len = strlen((char*)ciphertext);
-
-    EVP_CIPHER_CTX* ctx;
-    int len;
-
-    int plaintext_len;
-
-    unsigned char iv[] = "\0";
-
-    /* Create and initialize the context */
-    ctx = EVP_CIPHER_CTX_new();
-
-    /* Initialize the cipher for decryption */
-    EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv);
-
-    /* Provide the ciphertext to be decrypted */
-    EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len);
-
-    plaintext_len = len;
-
-    /* Finalize the decryption */
-    EVP_DecryptFinal_ex(ctx, plaintext + len, &len);
-
-    plaintext_len += len;
-
-    /* Clean up */
-    EVP_CIPHER_CTX_free(ctx);
-
-    plaintext[plaintext_len] = '\0';  // Null-terminate the decrypted text
+    char command[1024];
+    sprintf_s(command, "openssl enc -aes-256-cbc -d -pbkdf2 -in %s -out %s -k %s", inFile, outFile, key_str);
+    system(command);
+    printf("\nDecryption is done");
 }
+
+
 
 // A function that uses SHA512 in OpenSSL and prints the hash value of the plain text
 int generateHash(const unsigned char* plain_text, unsigned int plain_text_length,
@@ -395,6 +349,10 @@ void signData(const unsigned char* plainText, unsigned int plainTextLen,
 
     /* Sign the hash using the private key */
     signRSA(hashValue, hashSize, privateKeyFile, signature, signatureLen);
+    /* Creating the file */
+    char command[1024];
+    sprintf_s(command, "echo %s > signature.txt", hashValue);
+    system(command);
     printf("Signature created successfully.\n");
 }
 
@@ -409,7 +367,7 @@ void verifySignature(const unsigned char* plainText, unsigned int plainTextLen,
     generateHash(plainText, plainTextLen, hashValue, &hashSize);
 
     /* Verify the signature using the public key */
-    bool verificationResult = verifyRSASignature(hashValue, hashSize, publicKeyFile, signature, signatureLen);
+    bool verificationResult = verifyRSASignature(hashValue, hashSize, publicKeyFile, signature, signatureLen);    
     /* Print the verification result */
     if (verificationResult) {
         printf("\nSignature verified successfully.\n");
@@ -500,7 +458,6 @@ unsigned char* get_string()
 {
     // Read a string from the console
     string input;
-    cout << "Enter a string: ";
     getline(std::cin, input);
 
     // Allocate memory for the unsigned char array
@@ -530,4 +487,3 @@ void getKey(unsigned char* key, int size)
         cin >> key[i];
     }
 }
-
