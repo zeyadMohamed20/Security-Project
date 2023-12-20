@@ -78,7 +78,7 @@ int main() {
 
             /* Sign the data */
             signData(plaintext, strlen((const char*)plaintext), privateKeyFile, signature, &signatureLen);
-            
+
             /* Verify the signature */
             verifySignature(plaintext, strlen((const char*)plaintext), publicKeyFile, signature, &signatureLen);
         }
@@ -496,19 +496,22 @@ bool verifyRSASignature(const unsigned char* data, unsigned int dataLen,
 }
 
 
-unsigned char* get_string() {
-    char buffer[BUFSIZ];
-    printf("Enter a string: ");
-    fgets(buffer, 100, stdin);
-    size_t len = sizeof(buffer) - 1;
-    unsigned char* array = new unsigned char[len];
-    if (array == NULL) {
-        printf("Memory allocation failed\n");
-        exit(1);
-    }
-    memcpy(array, buffer, len);
-    return array;
+unsigned char* get_string()
+{
+    // Read a string from the console
+    string input;
+    cout << "Enter a string: ";
+    getline(std::cin, input);
+
+    // Allocate memory for the unsigned char array
+    unsigned char* data = new unsigned char[input.length() + 1];
+
+    // Copy the string data to the unsigned char array
+    strcpy(reinterpret_cast<char*>(data), input.c_str());
+
+    return data;
 }
+
 
 void generate_key(void)
 {
@@ -527,3 +530,4 @@ void getKey(unsigned char* key, int size)
         cin >> key[i];
     }
 }
+
