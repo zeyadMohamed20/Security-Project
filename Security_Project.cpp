@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_DEPRECATE
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -8,6 +7,7 @@
 #include <vector>
 #include <fstream>
 #include <stdlib.h>
+#include <iomanip>
 
 #include <openssl/aes.h>
 #include <openssl/err.h>
@@ -17,6 +17,7 @@
 #include <openssl/sha.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
+#include "test.hpp"
 
 extern "C"
 {
@@ -25,91 +26,100 @@ extern "C"
 
 using namespace std;
 
-#define BUFSIZE 1024
-
-void encrypt(unsigned char* inFile, unsigned char* outFile, unsigned char* key_str);
-void decrypt(unsigned char* inFile, unsigned char* outFile, unsigned char* key_str);
-int generateHash(const unsigned char* plain_text, unsigned int plain_text_length, unsigned char* hash, unsigned int* hash_length);
-void append(const unsigned char* text1, const unsigned char* text2, unsigned char* result);
-int encryptRSA(unsigned char* data, int dataLen, const char* keyFile, unsigned char* ciphertext);
-int decryptRSA(unsigned char* data, int dataLen, const char* KeyFile, unsigned char* decryptedtext);
-void hash_asym_sym(unsigned char* plainText, unsigned int plainTextLen, const char* privateKeyFile, unsigned char* result);
-void sign(unsigned char* plainText, unsigned int plainTextLen, const char* privateKeyFile, unsigned char* cipherHash, unsigned int* CipherHashSize);
-void print(unsigned char* text, unsigned int size);
-bool verifyRSASignature(const unsigned char* data, unsigned int dataLen, const char* publicKeyFile, const unsigned char* signature, size_t* signatureLen);
-void signRSA(const unsigned char* data, unsigned int dataLen, const char* privateKeyFile, unsigned char* signature, size_t* signatureLen);
-void verifySignature(const unsigned char* plainText, unsigned int plainTextLen, const char* publicKeyFile, const unsigned char* signature, size_t* signatureLen);
-void signData(const unsigned char* plainText, unsigned int plainTextLen, const char* privateKeyFile, unsigned char* signature, size_t* signatureLen);
-unsigned char* get_string();
-void generate_key(void);
-void getKey(unsigned char* key, int size);
-
 int main() {
-    const char* publicKeyFile = "public.pem";
-    const char* privateKeyFile = "private.pem";
-    unsigned char* plaintext;
+    const char publicKeyFile[] = "public.pem";
+    const char privateKeyFile[] = "private.pem";
     char option;
     char choice;
     do
-    {
-        printf("Enter the plain text: ");
-        plaintext = get_string();
-        printf("(1) Encrypt using AES\n(2) Decrypt using AES\n(3) Sign using RSA\n(4) Veify using RSA\n(5) Sign + encrypt\n(6) Verify + decrypt\n");
-        scanf_s("%c", &option);
+    {        
+        cout << "(1) Encrypt using AES\n(2) Decrypt using AES\n(3) Sign using RSA\n(4) Veify using RSA\n(5) Sign + encrypt\n(6) Verify + decrypt\n";
+        cin >> option;
         if (option == '1')
         {            
-            unsigned char* fileIn = get_string();          
-            unsigned char* fileOut = get_string();            
-            unsigned char* key = get_string();
+            string fileInString, fileOutString, keyString;
+            size_t lenFileIn, lenFileOut, lenKey;
+            cin >> fileInString >> fileOutString >> keyString;
+            lenFileIn = fileInString.size();
+            lenFileOut = fileOutString.size();
+            lenKey = keyString.size();
+            char* fileIn = new char[lenFileIn + 1];
+            char* fileOut = new char[lenFileOut + 1];
+            char* key = new char[lenKey + 1];
+            strcpy_s(fileIn, lenFileIn + 1, fileInString.c_str());
+            strcpy_s(fileOut, lenFileOut + 1, fileOutString.c_str());
+            strcpy_s(key, lenKey + 1, keyString.c_str());            
             encrypt(fileIn, fileOut, key);
         }
         else if (option == '2')
-        {               
-            unsigned char* fileIn = get_string();            
-            unsigned char* fileOut = get_string();            
-            unsigned char* key = get_string();
+        {                           
+            string fileInString, fileOutString, keyString;
+            int lenFileIn, lenFileOut, lenKey;
+            cin >> fileInString >> fileOutString >> keyString;
+            lenFileIn = fileInString.size();
+            lenFileOut = fileOutString.size();
+            lenKey = keyString.size();
+            char* fileIn = new char[lenFileIn + 1];
+            char* fileOut = new char[lenFileOut + 1];
+            char* key = new char[lenKey + 1];
+            strcpy_s(fileIn, lenFileIn + 1, fileInString.c_str());
+            strcpy_s(fileOut, lenFileOut + 1, fileOutString.c_str());
+            strcpy_s(key, lenKey + 1, keyString.c_str());
             decrypt(fileIn, fileOut, key);
         }
         else if (option == '3')
         {
-            generate_key();
-            /* sign */            
-            unsigned char signature[4096];  // Adjust the size based on your key size
+            //generate_key();
+            /* sign */
+            unsigned char signature[BUFSIZ];  // Adjust the size based on your key size
             size_t signatureLen;
 
+            string plaintextString;
+            cout << "Plain text: ";
+            cin >> plaintextString;
+            unsigned int lenPlaintext = plaintextString.size();
+            unsigned char* plaintext = new unsigned char[lenPlaintext + 1];
+            strcpy_s((char*)plaintext, lenPlaintext + 1, plaintextString.c_str());
             /* Sign the data */
-            signData(plaintext, strlen((const char*)plaintext), privateKeyFile, signature, &signatureLen);            
+            signData(plaintext, lenPlaintext, privateKeyFile, signature, &signatureLen);                        
         }
         else if (option == '4')
         {
-            unsigned char signature[4096];  // Adjust the size based on your key size
-            size_t signatureLen;
-            /* Verify the signature */
-            verifySignature(plaintext, strlen((const char*)plaintext), publicKeyFile, signature, &signatureLen);
+            string plaintextString;
+            cout << "Plain text: ";
+            cin >> plaintextString;
+            unsigned int lenPlaintext = plaintextString.size();
+            unsigned char* plaintext = new unsigned char[lenPlaintext + 1];
+            unsigned char signature[BUFSIZ]; 
+            size_t signatureLen;            
+            verifySignature(plaintext, lenPlaintext, publicKeyFile, signature, &signatureLen);
         }
-        else if (option == '5')
-        {
-            unsigned char signature[256];  // Adjust the size based on your key size
-            unsigned char sigCipher[4096];
-            unsigned char key[16];    /* AES key size = 16Bytes */
-            unsigned char decryptedSig[256];
-            size_t signatureLen;
-            unsigned int plainTextLen = strlen((const char*)plaintext);
+        //else if (option == '5')
+        //{
+        //    char *signature = nullptr;            
+        //    char sigCipher[4096];            
+        //    char decryptedSig[256];
+        //    size_t signatureLen;
+        //    unsigned int plainTextLen = strlen((const char*)plaintext);
 
-            generate_key();
-            /* sign */
-            signData(plaintext, plainTextLen, privateKeyFile, signature, &signatureLen);
-            printf("Signaure: ");
-            print(signature, signatureLen);
-            getKey(key, sizeof(key));
-            /* encrypt */
-            encrypt(signature, key, sigCipher);
-            printf("encrypted hash: %x", sigCipher);
-            /* decrypt */
-            decrypt(sigCipher, key, decryptedSig);
-            /* verify */
-            verifySignature(decryptedSig, plainTextLen, publicKeyFile, decryptedSig, &signatureLen);
-        }
+        //    generate_key();
+        //    /* sign */
+        //    signData(plaintext, plainTextLen, privateKeyFile, (unsigned char*)signature, &signatureLen);
+        //    cout << "Sig: ";
+        //    print(signature, signatureLen);
+
+        //    string keyString;
+        //    cin >> keyString;    
+        //    int lenKey = keyString.size();
+        //    char* key = new char[lenKey];
+        //    /* encrypt */
+        //    encrypt(signature, key, sigCipher);
+        //    printf("encrypted hash: %x", sigCipher);
+        //    /* decrypt */
+        //    decrypt(sigCipher, key, decryptedSig);
+        //    /* verify */
+        //    verifySignature((unsigned char*)decryptedSig, plainTextLen, publicKeyFile, (unsigned char*)decryptedSig, &signatureLen);
+        //}
         else
         {
             printf("Invalid input");
@@ -122,7 +132,7 @@ int main() {
 
 
 
-void encrypt(unsigned char* inFile, unsigned char* outFile, unsigned char* key_str)
+void encrypt(char* inFile, char* outFile, char* key_str)
 {
     char command[1024];
     sprintf_s(command, "openssl enc -aes-256-cbc -salt -pbkdf2 -in %s -out %s -k %s", inFile, outFile, key_str);
@@ -130,7 +140,7 @@ void encrypt(unsigned char* inFile, unsigned char* outFile, unsigned char* key_s
     printf("\nEncryption is done");
 }
 
-void decrypt(unsigned char* inFile, unsigned char* outFile, unsigned char* key_str)
+void decrypt(char* inFile, char* outFile, char* key_str)
 {
     char command[1024];
     sprintf_s(command, "openssl enc -aes-256-cbc -d -pbkdf2 -in %s -out %s -k %s", inFile, outFile, key_str);
@@ -182,21 +192,6 @@ int generateHash(const unsigned char* plain_text, unsigned int plain_text_length
     return true;
 }
 
-
-void append(const unsigned char* text1, const unsigned char* text2, unsigned char* result)
-{
-    // Determine the lengths of the strings
-    size_t len1 = strlen((const char*)text1);
-    size_t len2 = strlen((const char*)text2);
-
-    // Copy the first string into the result array
-    strcpy((char*)result, (const char*)text1);
-
-    // Concatenate the second string to the result array
-    strcat((char*)result, (const char*)text2);
-}
-
-/* Function to encrypt data using RSA */
 /* Function to encrypt data using RSA */
 int encryptRSA(unsigned char* plaintext, int plaintext_len, const char* publicKeyFile, unsigned char* ciphertext)
 {
@@ -276,41 +271,6 @@ int decryptRSA(unsigned char* ciphertext, int ciphertext_len, const char* privat
 }
 
 
-/*
-   1- Generate hash value for the plain text using SHA512
-   2- Encrypt hash in RSA using private key
-   Both steps 1 and 2 are Sign stage
-   3- Encrypt plain using AES (Encryption)
-   4- Append encrypted hash with encrypted plain
-*/
-void hash_asym_sym(unsigned char* plainText, unsigned int plainTextLen,
-    const char* privateKeyFile, unsigned char* result)
-{
-    unsigned char hashValue[EVP_MAX_MD_SIZE];
-    unsigned int hashSize;
-
-    /* Generate hash value for the plain text using SHA512 */
-    generateHash(plainText, plainTextLen, hashValue, &hashSize);
-
-    unsigned char* cipherHash = new unsigned char[hashSize];
-    unsigned char* cipherText = new unsigned char[plainTextLen];
-
-    /* Encrypt Plain Text Using AES*/
-
-    /* Encrypt the hash using the private key */
-    encryptRSA(hashValue, hashSize, privateKeyFile, cipherHash);
-
-    /* Append the encrypted plainText with the encrypted hash value (This is the data sent) */
-    append(cipherText, cipherHash, result);
-
-    delete[]cipherHash;
-    delete[]cipherText;
-}
-
-/*
-* 1- Generate hash value for the plain text using SHA512
-  2- Encrypt hash in RSA using private key
-*/
 void sign(unsigned char* plainText, unsigned int plainTextLen,
     const char* privateKeyFile, unsigned char* cipherHash, unsigned int* CipherHashSize)
 {
@@ -329,30 +289,16 @@ void sign(unsigned char* plainText, unsigned int plainTextLen,
 
 }
 
-void print(unsigned char* text, unsigned int size)
-{
-    for (unsigned int i = 0; i < size; i++)
-    {
-        printf("%02x", text[i]);
-    }
-    printf("\n");
-}
+
 /* Function to sign data */
 void signData(const unsigned char* plainText, unsigned int plainTextLen,
     const char* privateKeyFile, unsigned char* signature,
     size_t* signatureLen) {
     unsigned char hashValue[EVP_MAX_MD_SIZE];
     unsigned int hashSize;
-
-    /* Generate hash value for the plain text using SHA512 */
     generateHash(plainText, plainTextLen, hashValue, &hashSize);
-
-    /* Sign the hash using the private key */
-    signRSA(hashValue, hashSize, privateKeyFile, signature, signatureLen);
-    /* Creating the file */
-    char command[1024];
-    sprintf_s(command, "echo %s > signature.txt", hashValue);
-    system(command);
+    signRSA(hashValue, hashSize, privateKeyFile, signature, signatureLen);    
+    writeFile((char*)signature, *signatureLen);
     printf("Signature created successfully.\n");
 }
 
@@ -454,21 +400,6 @@ bool verifyRSASignature(const unsigned char* data, unsigned int dataLen,
 }
 
 
-unsigned char* get_string()
-{
-    // Read a string from the console
-    string input;
-    getline(std::cin, input);
-
-    // Allocate memory for the unsigned char array
-    unsigned char* data = new unsigned char[input.length() + 1];
-
-    // Copy the string data to the unsigned char array
-    strcpy(reinterpret_cast<char*>(data), input.c_str());
-
-    return data;
-}
-
 
 void generate_key(void)
 {
@@ -486,4 +417,76 @@ void getKey(unsigned char* key, int size)
     {
         cin >> key[i];
     }
+}
+
+
+void readFile(char* fileIn, char* plaintext)
+{
+    ifstream file(fileIn);
+    string line; 
+    string plaintextString;
+    int lenPlaintext = 0;
+    while (getline(file, line)) 
+    {
+        plaintextString += line;                       
+    }
+    lenPlaintext = plaintextString.size();
+    plaintext = new char[lenPlaintext + 1];
+    strcpy_s(plaintext, lenPlaintext + 1, plaintextString.c_str());
+    file.close();
+}
+
+
+//void writeHexaFile(char* text, unsigned int size) {
+//    ofstream outputFile;
+//    outputFile.open("output.txt"); 
+//    if (outputFile)
+//    { 
+//        for (unsigned int i = 0; i < size; i++) { 
+//            outputFile << hex << setfill('0') << setw(2) << (int)text[i];
+//        }
+//        outputFile.close();
+//    }
+//    else
+//    {
+//        cout << "File could not be opened.\n"; 
+//    }
+//}
+
+
+void writeFile(char* text, unsigned int size) {
+  ofstream outputFile;
+  outputFile.open("output.txt"); 
+  if (outputFile)
+  { 
+    for (unsigned int i = 0; i < size; i++) { 
+      outputFile << text[i]; // write the char itself
+    }
+    outputFile.close();
+  }
+  else
+  {
+    cout << "File could not be opened.\n"; 
+  }
+}
+
+
+
+void print_hexa(char* text, unsigned int size)
+{
+    for (unsigned int i = 0; i < size; i++)
+    {
+        printf("%02x", text[i]);
+    }
+    printf("\n");
+}
+
+
+void print(char* text, unsigned int size)
+{
+    for (unsigned int i = 0; i < size; i++)
+    {
+        printf("%c", text[i]);
+    }
+    printf("\n");
 }
