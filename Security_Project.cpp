@@ -37,84 +37,28 @@ int main() {
         cin >> option;
         if (option == '1')
         {            
-            string fileInString, fileOutString, keyString;
-            size_t lenFileIn, lenFileOut, lenKey;
-            cin >> fileInString >> fileOutString >> keyString;
-            lenFileIn = fileInString.size();
-            lenFileOut = fileOutString.size();
-            lenKey = keyString.size();
-            char* fileIn = new char[lenFileIn + 1];
-            char* fileOut = new char[lenFileOut + 1];
-            char* key = new char[lenKey + 1];
-            strcpy_s(fileIn, lenFileIn + 1, fileInString.c_str());
-            strcpy_s(fileOut, lenFileOut + 1, fileOutString.c_str());
-            strcpy_s(key, lenKey + 1, keyString.c_str());            
-            encrypt(fileIn, fileOut, key);
+            option_1();
         }
         else if (option == '2')
         {                           
-            string fileInString, fileOutString, keyString;
-            int lenFileIn, lenFileOut, lenKey;
-            cin >> fileInString >> fileOutString >> keyString;
-            lenFileIn = fileInString.size();
-            lenFileOut = fileOutString.size();
-            lenKey = keyString.size();
-            char* fileIn = new char[lenFileIn + 1];
-            char* fileOut = new char[lenFileOut + 1];
-            char* key = new char[lenKey + 1];
-            strcpy_s(fileIn, lenFileIn + 1, fileInString.c_str());
-            strcpy_s(fileOut, lenFileOut + 1, fileOutString.c_str());
-            strcpy_s(key, lenKey + 1, keyString.c_str());
-            decrypt(fileIn, fileOut, key);
+            option_2();
         }
         else if (option == '3')
         {                                              
-            string fileInString;        
-            cin >> fileInString;
-            size_t fileInLen = fileInString.size();
-            char* fileIn = new char[fileInLen + 1];
-            strcpy_s(fileIn, fileInLen + 1, (const char*)fileInString.c_str());
-            signPlain(fileIn);
+            option_3();
         }
         else if (option == '4')
         {
-            string plainFileStr;
-            string sigFileStr;
-            cin >> plainFileStr >> sigFileStr;
-            size_t plainFileLen = plainFileStr.size();
-            size_t sigFileLen = sigFileStr.size();
-            char* plainFile = new char[plainFileLen + 1];
-            char* sigFile = new char[sigFileLen + 1];
-            strcpy_s(plainFile, plainFileLen + 1, (const char*)plainFileStr.c_str());
-            strcpy_s(sigFile, sigFileLen + 1, (const char*)sigFileStr.c_str());
-            verifyPlain(plainFile, sigFile);
+            option_4();
         }
-        //else if (option == '5')
-        //{
-        //    char *signature = nullptr;            
-        //    char sigcipher[4096];            
-        //    char decryptedsig[256];
-        //    size_t signaturelen;
-        //    unsigned int plaintextlen = strlen((const char*)plaintext);
-
-        //    generate_key();
-        //    /* sign */
-        //    signdata(plaintext, plaintextlen, privatekeyfile, (unsigned char*)signature, &signaturelen);
-        //    cout << "sig: ";
-        //    print(signature, signaturelen);
-
-        //    string keystring;
-        //    cin >> keystring;    
-        //    int lenkey = keystring.size();
-        //    char* key = new char[lenkey];
-        //    /* encrypt */
-        //    encrypt(signature, key, sigcipher);
-        //    printf("encrypted hash: %x", sigcipher);
-        //    /* decrypt */
-        //    decrypt(sigcipher, key, decryptedsig);
-        //    /* verify */
-        //    verifysignature((unsigned char*)decryptedsig, plaintextlen, publickeyfile, (unsigned char*)decryptedsig, &signaturelen);
-        //}
+        else if (option == '5')
+        {
+            option_5();
+        }
+        else if (option == '6')
+        {
+            option_6();
+        }
         else
         {
             printf("Invalid input");
@@ -127,18 +71,19 @@ int main() {
 
 
 
-void encrypt(char* inFile, char* outFile, char* key_str)
+void encrypt(char* inFile, char* key_str)
 {
     char command[1024];
-    sprintf_s(command, "openssl enc -aes-256-cbc -salt -pbkdf2 -in %s -out %s -k %s", inFile, outFile, key_str);
+    sprintf_s(command, "openssl enc -aes-256-cbc -salt -pbkdf2 -in %s -out file.enc -k %s", inFile, key_str);
     system(command);
     printf("\nEncryption is done");
 }
 
-void decrypt(char* inFile, char* outFile, char* key_str)
+
+void decrypt(char* inFile, char* key_str)
 {
     char command[1024];
-    sprintf_s(command, "openssl enc -aes-256-cbc -d -pbkdf2 -in %s -out %s -k %s", inFile, outFile, key_str);
+    sprintf_s(command, "openssl enc -aes-256-cbc -d -pbkdf2 -in %s -out file2.txt -k %s", inFile, key_str);
     system(command);
     printf("\nDecryption is done");
 }
@@ -434,9 +379,9 @@ void write_hex_file(char* text, size_t size) {
 }
 
 
-void writeFile(char* text, unsigned int size) {
+void writeFile(unsigned char* text, size_t size) {
   ofstream outputFile;
-  outputFile.open("output.txt"); 
+  outputFile.open("output.sigEnc"); 
   if (outputFile)
   { 
     for (unsigned int i = 0; i < size; i++) { 
@@ -497,6 +442,26 @@ bool readFile(string& content)
     return true;
 }
 
+bool readFile(string fileName, string& content)
+{    
+    ifstream inputFile;
+    inputFile.open(fileName);
+
+    if (!inputFile) {
+        cerr << "Could not open the file.\n";
+        return false;
+    }
+
+    string line;
+    while (std::getline(inputFile, line)) {
+        content += line + "\n";
+    }
+
+    inputFile.close();
+    return true;
+}
+
+
 void signPlain(char* inFile) {
     char command[1024];
     sprintf_s(command, "openssl pkeyutl -sign -in %s -out file.sig -inkey private.pem", inFile);
@@ -509,4 +474,114 @@ void verifyPlain(char* plaintext, char* signature) {
     sprintf_s(command, "openssl pkeyutl -verify -in %s -sigfile %s -pubin -inkey public.pem", plaintext, signature);
     system(command);
     cout << "Signature is done";
+}
+
+void append(const unsigned char* text1, const unsigned char* text2, unsigned char* result)
+{    
+    size_t len1 = strlen((const char*)text1);
+    size_t len2 = strlen((const char*)text2);    
+    strcpy_s((char*)result, len1 + 1, (const char*)text1);    
+    strcat_s((char*)result, len2 + 1, (const char*)text2);
+}
+
+
+void option_1()
+{
+    string fileInString, keyString;
+    size_t lenFileIn, lenFileOut, lenKey;
+    cin >> fileInString >> keyString;
+    lenFileIn = fileInString.size();
+    lenKey = keyString.size();
+    char* fileIn = new char[lenFileIn + 1];
+    char* key = new char[lenKey + 1];
+    strcpy_s(fileIn, lenFileIn + 1, fileInString.c_str());
+    strcpy_s(key, lenKey + 1, keyString.c_str());
+    encrypt(fileIn, key);
+}
+
+void option_2()
+{
+    string fileInString, keyString;
+    int lenFileIn, lenFileOut, lenKey;
+    cin >> fileInString >> keyString;
+    lenFileIn = fileInString.size();
+    lenKey = keyString.size();
+    char* fileIn = new char[lenFileIn + 1];
+    char* key = new char[lenKey + 1];
+    strcpy_s(fileIn, lenFileIn + 1, fileInString.c_str());
+    strcpy_s(key, lenKey + 1, keyString.c_str());
+    decrypt(fileIn, key);
+}
+
+void option_3()
+{
+    string fileInString;
+    cin >> fileInString;
+    size_t fileInLen = fileInString.size();
+    char* fileIn = new char[fileInLen + 1];
+    strcpy_s(fileIn, fileInLen + 1, (const char*)fileInString.c_str());
+    signPlain(fileIn);
+}
+
+
+void option_4()
+{
+    string plainFileStr;
+    string sigFileStr;
+    cin >> plainFileStr >> sigFileStr;
+    size_t plainFileLen = plainFileStr.size();
+    size_t sigFileLen = sigFileStr.size();
+    char* plainFile = new char[plainFileLen + 1];
+    char* sigFile = new char[sigFileLen + 1];
+    strcpy_s(plainFile, plainFileLen + 1, (const char*)plainFileStr.c_str());
+    strcpy_s(sigFile, sigFileLen + 1, (const char*)sigFileStr.c_str());
+    verifyPlain(plainFile, sigFile);
+}
+
+
+void option_5()
+{
+    string fileInString, keyString;
+    size_t lenFileIn, lenFileOut, lenKey;
+    cin >> fileInString >> keyString;
+    lenFileIn = fileInString.size();
+    lenKey = keyString.size();
+    char* fileIn = new char[lenFileIn + 1];
+    char* key = new char[lenKey + 1];
+    strcpy_s(fileIn, lenFileIn + 1, fileInString.c_str());
+    strcpy_s(key, lenKey + 1, keyString.c_str());
+    encrypt(fileIn, key);
+    cout << endl;
+    signPlain(fileIn);
+    /* append the two files in a third file and delete the first two */
+    string sig, enc;
+    readFile("file.sig", sig);
+    readFile("file.enc", enc);
+    unsigned char* res = nullptr;
+    append((const unsigned char*)sig.c_str(), (const unsigned char*)enc.c_str(), res);
+    size_t resSize = strlen((char*)res);
+    writeFile(res, resSize);
+}
+
+
+void option_6()
+{
+    string fileInString, fileOutString, keyString, sigFileString;
+    int lenFileIn, lenFileOut, lenKey, lenSigFile;
+    cin >> fileInString >> fileOutString >> keyString >> sigFileString;
+    lenFileIn = fileInString.size();
+    lenFileOut = fileOutString.size();
+    lenKey = keyString.size();
+    lenSigFile = sigFileString.size();
+    char* fileIn = new char[lenFileIn + 1];
+    char* fileOut = new char[lenFileOut + 1];
+    char* key = new char[lenKey + 1];
+    char* sigFile = new char[lenSigFile + 1];
+    strcpy_s(fileIn, lenFileIn + 1, fileInString.c_str());
+    strcpy_s(fileOut, lenFileOut + 1, fileOutString.c_str());
+    strcpy_s(key, lenKey + 1, keyString.c_str());
+    strcpy_s(sigFile, lenSigFile + 1, sigFileString.c_str());
+    decrypt(fileIn, key);
+    cout << endl;
+    verifyPlain(fileOut, sigFile);
 }
