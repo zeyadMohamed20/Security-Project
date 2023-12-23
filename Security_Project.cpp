@@ -61,9 +61,9 @@ int main() {
         }
         else
         {
-            printf("Invalid input");
+            cout << "Invalid input";
         }
-        printf("\nChoose another operation(y/n)");
+        cout << endl << "Choose another operation(y/n)";
         cin >> choice;
     } while (choice == 'y' || choice == 'Y');
     return 0;
@@ -71,22 +71,23 @@ int main() {
 
 
 
-void encrypt(char* inFile, char* key_str)
+void encrypt(char* inFile, char* key)
 {
     char command[1024];
-    sprintf_s(command, "openssl enc -aes-256-cbc -salt -pbkdf2 -in %s -out file.enc -k %s", inFile, key_str);
+    sprintf_s(command, "openssl enc -aes-256-cbc -salt -pbkdf2 -in %s -out file.enc -k %s", inFile, key);
     system(command);
     printf("\nEncryption is done");
 }
 
 
-void decrypt(char* inFile, char* key_str)
+void decrypt(char* inFile, char* key)
 {
     char command[1024];
-    sprintf_s(command, "openssl enc -aes-256-cbc -d -pbkdf2 -in %s -out file2.txt -k %s", inFile, key_str);
+    sprintf_s(command, "openssl enc -aes-256-cbc -d -pbkdf2 -in %s -out file2.txt -k %s", inFile, key);
     system(command);
     printf("\nDecryption is done");
 }
+
 
 
 
@@ -396,6 +397,13 @@ void writeFile(unsigned char* text, size_t size) {
 }
 
 
+void delete_file(char* file)
+{
+    char command[1024];
+    sprintf_s(command, "rm %s",file);
+    system(command);    
+}
+
 
 void print_hexa(char* text, unsigned int size)
 {
@@ -469,20 +477,72 @@ void signPlain(char* inFile) {
     cout << "Signature is done";    
 }
 
-void verifyPlain(char* plaintext, char* signature) {
+void verifyPlain(char* inFile, char* sigFile) {
     char command[1024];
-    sprintf_s(command, "openssl pkeyutl -verify -in %s -sigfile %s -pubin -inkey public.pem", plaintext, signature);
+    sprintf_s(command, "openssl pkeyutl -verify -in %s -sigfile %s -pubin -inkey public.pem", inFile, sigFile);
     system(command);
     cout << "Signature is done";
 }
 
-void append(const unsigned char* text1, const unsigned char* text2, unsigned char* result)
-{    
-    size_t len1 = strlen((const char*)text1);
-    size_t len2 = strlen((const char*)text2);    
-    strcpy_s((char*)result, len1 + 1, (const char*)text1);    
-    strcat_s((char*)result, len2 + 1, (const char*)text2);
+
+void append_files(string file1, string file2) {
+    // open the input files for reading
+    ifstream in1(file1);
+    ifstream in2(file2);
+    // check if the input files are opened successfully
+    if (!in1 || !in2) {
+        cerr << "Error opening input files\n";
+        return;
+    }
+    // open the output file for writing
+    ofstream out("output.txt");
+    // check if the output file is opened successfully
+    if (!out) {
+        cerr << "Error opening output file\n";
+        return;
+    }
+    // copy the contents of the first input file to the output file
+    out << in1.rdbuf();
+    // copy the contents of the second input file to the output file
+    out << in2.rdbuf();
+    // close the files
+    in1.close();
+    in2.close();
+    out.close();
 }
+
+
+
+
+void split_file(string file)
+{
+    ifstream in(file);
+    if (!in) {
+        cerr << "Error opening input file\n";
+        return;
+    }
+    ofstream out1("temp1.txt");
+    ofstream out2("temp2.txt");
+    if (!out1 || !out2) {
+        cerr << "Error opening output files\n";
+        return;
+    }
+    char buffer[256];
+    /* read the first 256 characters from the input file */
+    in.read(buffer, 256);    
+    out1.write(buffer, 256);
+    /* copy the rest of the input file to the second output file */
+    out2 << in.rdbuf();   
+    in.close();
+    out1.close();
+    out2.close();
+}
+
+
+
+
+
+
 
 
 void option_1()
@@ -542,7 +602,7 @@ void option_4()
 void option_5()
 {
     string fileInString, keyString;
-    size_t lenFileIn, lenFileOut, lenKey;
+    size_t lenFileIn, lenKey;
     cin >> fileInString >> keyString;
     lenFileIn = fileInString.size();
     lenKey = keyString.size();
@@ -553,35 +613,31 @@ void option_5()
     encrypt(fileIn, key);
     cout << endl;
     signPlain(fileIn);
-    /* append the two files in a third file and delete the first two */
-    string sig, enc;
-    readFile("file.sig", sig);
-    readFile("file.enc", enc);
-    unsigned char* res = nullptr;
-    append((const unsigned char*)sig.c_str(), (const unsigned char*)enc.c_str(), res);
-    size_t resSize = strlen((char*)res);
-    writeFile(res, resSize);
+    /* append the two files in a third file and delete the first two */        
+    /*append_files("file.sig", "file.enc");
+    char sigFile[] = "file.sig";
+    char encFile[] = "file.enc";*/
+    //delete_file(sigFile);
+    //delete_file(encFile);
 }
 
 
 void option_6()
 {
-    string fileInString, fileOutString, keyString, sigFileString;
-    int lenFileIn, lenFileOut, lenKey, lenSigFile;
-    cin >> fileInString >> fileOutString >> keyString >> sigFileString;
-    lenFileIn = fileInString.size();
-    lenFileOut = fileOutString.size();
-    lenKey = keyString.size();
-    lenSigFile = sigFileString.size();
-    char* fileIn = new char[lenFileIn + 1];
-    char* fileOut = new char[lenFileOut + 1];
-    char* key = new char[lenKey + 1];
+    string encFileStr, sigFileStr, keyString;
+    size_t lenFileIn, lenSigFile, lenKey;
+    cin >> encFileStr >> sigFileStr >> keyString;
+    lenFileIn = encFileStr.size();
+    lenSigFile = sigFileStr.size();
+    lenKey = keyString.size();    
+    char* encFile = new char[lenFileIn + 1];    
     char* sigFile = new char[lenSigFile + 1];
-    strcpy_s(fileIn, lenFileIn + 1, fileInString.c_str());
-    strcpy_s(fileOut, lenFileOut + 1, fileOutString.c_str());
-    strcpy_s(key, lenKey + 1, keyString.c_str());
-    strcpy_s(sigFile, lenSigFile + 1, sigFileString.c_str());
-    decrypt(fileIn, key);
+    char* key = new char[lenKey + 1];
+    strcpy_s(encFile, lenFileIn + 1, encFileStr.c_str());    
+    strcpy_s(sigFile, lenSigFile + 1, sigFileStr.c_str());
+    strcpy_s(key, lenKey + 1, keyString.c_str());        
+    decrypt(encFile, key);
     cout << endl;
-    verifyPlain(fileOut, sigFile);
+    char plain[] = "file2.txt";
+    verifyPlain(plain, sigFile);
 }
