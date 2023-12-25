@@ -36,10 +36,7 @@ To install and use the Cryptix, follow these step-by-step instructions:
 git clone https://github.com/zeyadMohamed20/Security-Project.git
 ```
 
-2. Run .exe file
-```jsx
-
-```
+2. double click on the .exe file
 
 3. Congratulations the program is runnig ^_^
 
