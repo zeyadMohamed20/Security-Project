@@ -29,14 +29,21 @@ The tool has the following six options:
 
 To install and use the Cryptix, follow these step-by-step instructions:
 
-1. Clone the repository
+1. Install openssl
+    - for linux use the following command:
+    ```jvx
+    sudo apt-get install openssl
+    ``` 
+    - for windows you should download it from the official website
+
+2. Clone the repository
 ```jsx
 git clone https://github.com/zeyadMohamed20/Security-Project.git
 ```
 
-2. double click on the .exe file
+3. double click on the .exe file
 
-3. Congratulations the program is runnig ^_^
+4. Congratulations the program is runnig ^_^
 
 
 ## **Screenshots**
