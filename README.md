@@ -20,7 +20,7 @@ The tool has the following six options:
 - Sign                *using RSA-512*
 - Verify              *using RSA-512*
 - Encrypt + Sign      *using AES-256 + RSA-512*
-- Priority-Preemptive *using AES-256 + RSA-512*
+- decrypt + verify    *using AES-256 + RSA-512*
 
 ![Qt](https://img.shields.io/badge/Qt-%23217346.svg?style=for-the-badge&logo=Qt&logoColor=white)
 
