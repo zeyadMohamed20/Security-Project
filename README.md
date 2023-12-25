@@ -10,7 +10,9 @@
 - [Contributing](#contribution)
 - [Contact](#contact)
 
+![Qt](https://img.shields.io/badge/Qt-%23217346.svg?style=for-the-badge&logo=Qt&logoColor=white)
 
+![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
 
 ## **Description**
 Cryptix is a user-friendly Qt application that allows users to encrypt/decrypt/sign/verify files using the *AES* and *RSA* algorithms. Cryptix lets users generate RSA keys, as well as select the files they want to encrypt, decrypt, sign, or verify. Cryptix is designed to be fast, reliable, and secure, using the latest cryptographic standards and techniques. Cryptix is compatible with Windows, Linux, and Mac OS platforms.
@@ -21,10 +23,6 @@ The tool has the following six options:
 - Verify              *using RSA-512*
 - Encrypt + Sign      *using AES-256 + RSA-512*
 - decrypt + verify    *using AES-256 + RSA-512*
-
-![Qt](https://img.shields.io/badge/Qt-%23217346.svg?style=for-the-badge&logo=Qt&logoColor=white)
-
-![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
 
 
 ## **Installation**
