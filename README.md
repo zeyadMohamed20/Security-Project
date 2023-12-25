@@ -74,7 +74,7 @@ Here are step-by-step instructions for using the Cryptix tool:
     1. Press verify button.
     2. Choose the file that contains the data.
     3. Choose the file that contains the signature *"file.sig"*.
-    4. The the file is changed then the verification will fail, else it will succeed.
+    4. The file is changed then the verification will fail, else it will succeed.
 
 - **Encryption + Signature using *AES256 + RSA-512***
     1. Press encrypt + sign button.
