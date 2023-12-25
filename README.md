@@ -66,8 +66,8 @@ Here are step-by-step instructions for using the Cryptix tool:
 - **Signature using *RSA-512***
     1. Press sign button.
     2. Choose the file you want to sign.
-    3. The public and private keys will be generated automatically *"public.pem", and *"private.pem"**.
-    4. A file contains the signature is generated and called **"file.sig"** 
+    3. The public and private keys will be generated automatically *"public.pem"*, and *"private.pem"*.
+    4. A file contains the signature is generated and called *"file.sig"* 
 
 - **Verification using *RSA-512***
 `(You should sign a file first)`
@@ -80,7 +80,7 @@ Here are step-by-step instructions for using the Cryptix tool:
     1. Press encrypt + sign button.
     2. Choose the the file you want the encrypt and sign it.
     3. You will be asked to enter the shared key.
-    4. The public and private keys will be generated automatically *"public.pem", and *"private.pem"*.
+    4. The public and private keys will be generated automatically *"public.pem"*, and *"private.pem"*.
     5. Two files will be generated *"file.enc"* that contains the encryption using AES-256 and  *"file.sig"* that contains the signature using RSA-256
 
 - **Decryption + Verification using *AES256 + RSA-512***
