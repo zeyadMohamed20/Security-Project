@@ -48,9 +48,20 @@ git clone https://github.com/zeyadMohamed20/Security-Project.git
 
 ## **Screenshots**
 <p align="center">
-  <img alt="README Cryptix screenshot1" [Screenshot] src="assets/images/README-Screenshot1.png"><br>
-  <img alt="README Cryptix screenshot2" [Screenshot] src="assets/images/README-Screenshot2.png"><br>
-  <img alt="README Cryptix screenshot3" [Screenshot] src="assets/images/README-Screenshot3.png"><br>
+    <img alt="README Cryptix screenshot1" [Screenshot] src="assets/images/README-Screenshot1.png"><br>
+    The main window
+    <img alt="README Cryptix screenshot2" [Screenshot] src="assets/images/README-Screenshot2.png"><br>
+    Encryption using AES
+    <img alt="README Cryptix screenshot3" [Screenshot] src="assets/images/README-Screenshot3.png"><br>
+    Decryption using AES
+    <img alt="README Cryptix screenshot4" [Screenshot] src="assets/images/README-Screenshot4.png"><br>
+    Sign using RSA 
+    <img alt="README Cryptix screenshot5" [Screenshot] src="assets/images/README-Screenshot5.png"><br>
+    Verify using RSA 
+    <img alt="README Cryptix screenshot6" [Screenshot] src="assets/images/README-Screenshot6.png"><br>
+    Encrypt + Sign using AES + RSA
+    <img alt="README Cryptix screenshot7" [Screenshot] src="assets/images/README-Screenshot7.png"><br>
+    Decrypt + Verify using AES + RSA
 </p>
 
 ## **Usage**
@@ -58,45 +69,51 @@ git clone https://github.com/zeyadMohamed20/Security-Project.git
 Here are step-by-step instructions for using the Cryptix tool:
 
 - **Encryption using *AES-256***
-    1. Press encrypt button.
+    1. Press EncryptAES button.
     2. Choose the file you want to encrypt.
     3. You will be asked to enter the shared key.
-    4. An encrypted file is generated called **"file.enc"**
-
+    4. Press EncryptAES button
+    5. An encrypted file is generated called **"file.enc"**
+    
 - **Decryption using *AES-256***
 `(You should encrypt a file first)`
-    1. Press decrypt button.
+    1. Press DecryptAES button.
     2. Choose the file you want to decrypt.
     3. You will be asked to enter the shared key.
-    4. The original file is generated and called **"file2.txt"**
+    4. Press DecryptAES button
+    5. The original file is generated and called **"file2.txt"**
 
 - **Signature using *RSA-512***
-    1. Press sign button.
+    1. Press Sign button.
     2. Choose the file you want to sign.
-    3. The public and private keys will be generated automatically *"public.pem"*, and *"private.pem"*.
-    4. A file contains the signature is generated and called *"file.sig"* 
+    3. The public and private keys *"public.pem"*, and *"private.pem"* will be generated automatically in the same directory of the .exe file.
+    4. Press Sign button
+    5. A file contains the signature is generated and called *"file.sig"* 
 
 - **Verification using *RSA-512***
 `(You should sign a file first)`
-    1. Press verify button.
+    1. Press Verify button.
     2. Choose the file that contains the data.
     3. Choose the file that contains the signature *"file.sig"*.
-    4. The file is changed then the verification will fail, else it will succeed.
+    4. Press Verify button
+    5. The file is changed then the verification will fail, else it will succeed.
 
 - **Encryption + Signature using *AES256 + RSA-512***
-    1. Press encrypt + sign button.
-    2. Choose the the file you want the encrypt and sign it.
+    1. Press Encrypt & Sign button.
+    2. Choose the file you want the encrypt and sign it.
     3. You will be asked to enter the shared key.
-    4. The public and private keys will be generated automatically *"public.pem"*, and *"private.pem"*.
-    5. Two files will be generated *"file.enc"* that contains the encryption using AES-256 and  *"file.sig"* that contains the signature using RSA-256
+    4. The public and private keys *"public.pem"*, and *"private.pem"* will be generated automatically in the same directory of the .exe file.
+    5. Press Encrypt & Sign button.
+    6. Two files will be generated *"file.enc"* that contains the encryption using AES-256 and  *"file.sig"* that contains the signature using RSA-256
 
 - **Decryption + Verification using *AES256 + RSA-512***
 `(You should encrypt and sign a file first)`
-    1. Press decrypt + verify button.
+    1. Press Decrypt & Verify button.
     2. Choose two files. the first is the encrypted file "*file.enc*", the second is the signature *"file.sig"*.
     3. You will be asked to enter the shared key.
-    4. The decrypted file will be generated "*file2.txt*".
-    5. If the file didn't changed, the verification will be done successfully else it will fail.
+    4. Press Decrypt & Verify button.
+    5. The decrypted file will be generated "*file2.txt*".    
+    6. If the file didn't changed, the verification will be done successfully else it will fail.
 
 ## **Contribution**
  
