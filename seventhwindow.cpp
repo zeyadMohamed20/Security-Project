@@ -9,7 +9,7 @@ SeventhWindow::SeventhWindow(QWidget *parent)
     setWindowTitle("Decrypt & Verify Configuration");
 
     // Set the application icon (logo)
-    QIcon appIcon(":/logo.png"); // Adjust the path accordingly
+    QIcon appIcon(":assets/Icons/logo.jpg"); // Adjust the path accordingly
     setWindowIcon(appIcon);
 
     // Set up layout for the seventh window using QGridLayout
@@ -19,7 +19,7 @@ SeventhWindow::SeventhWindow(QWidget *parent)
 
     // Background Image
     QLabel *backgroundImage = new QLabel(this);
-    QPixmap pixmap(":/walls.jpg"); // Adjust the path to your image
+    QPixmap pixmap(":assets/Icons/walls.jpg"); // Adjust the path to your image
     backgroundImage->setPixmap(pixmap);
     backgroundImage->setScaledContents(true);
 
@@ -181,7 +181,7 @@ void SeventhWindow::decryptAndVerify(const QString &inFile, const QString &key, 
     thirdWindow.decrypt(inFile, key);
 
     QFileInfo fileInfo(inFile);
-    QString decryptedFilePath = fileInfo.path() + "decrypted_file.txt";
+    QString decryptedFilePath = fileInfo.path() + "/decrypted_file.txt";
 
     // Call the verify function from FifthWindow
     FifthWindow fifthWindow;

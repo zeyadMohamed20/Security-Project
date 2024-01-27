@@ -11,7 +11,7 @@ FifthWindow::FifthWindow(QWidget *parent)
     setWindowTitle("Verify Configuration");
 
     // Set the application icon (logo)
-    QIcon appIcon(":/logo.png"); // Adjust the path accordingly
+    QIcon appIcon(":assets/Icons/logo.jpg"); // Adjust the path accordingly
     setWindowIcon(appIcon);
 
     // Set up layout for the fifth window using QGridLayout
@@ -21,7 +21,7 @@ FifthWindow::FifthWindow(QWidget *parent)
 
     // Background Image
     QLabel* backgroundImage = new QLabel(this);
-    QPixmap pixmap(":/walls.jpg");  // Adjust the path to your image
+    QPixmap pixmap(":assets/Icons/walls.jpg");  // Adjust the path to your image
     backgroundImage->setPixmap(pixmap);
     backgroundImage->setScaledContents(true);
 
@@ -184,7 +184,7 @@ void FifthWindow::verify(const QString& plainTextFile, const QString& sigFile)
     QFileInfo fileInfo(plainTextFile);
 
     // Adjust the paths for the public key and signature files
-    QString publicKeyPath = fileInfo.path() + "public.pem";
+    QString publicKeyPath = fileInfo.path() + "/public.pem";
 
     // Construct the command
     QString command = "openssl pkeyutl -verify -in \"" + plainTextFile + "\" -sigfile \"" + sigFile + "\" -pubin -inkey \"" + publicKeyPath + "\"";

@@ -12,7 +12,7 @@ ThirdWindow::ThirdWindow(QWidget *parent)
     setWindowTitle("DecryptAES Configuration");
 
     // Set the application icon (logo)
-    QIcon appIcon(":/logo.png"); // Adjust the path accordingly
+    QIcon appIcon(":assets/Icons/logo.jpg"); // Adjust the path accordingly
     setWindowIcon(appIcon);
 
     // Set up layout for the third window using QGridLayout
@@ -22,7 +22,7 @@ ThirdWindow::ThirdWindow(QWidget *parent)
 
     // Background Image
     QLabel* backgroundImage = new QLabel(this);
-    QPixmap pixmap(":/walls.jpg");  // Adjust the path to your image
+    QPixmap pixmap(":assets/Icons/walls.jpg");  // Adjust the path to your image
     backgroundImage->setPixmap(pixmap);
     backgroundImage->setScaledContents(true);
 
@@ -160,7 +160,7 @@ void ThirdWindow::finishClicked()
 void ThirdWindow::decrypt(const QString& inFile, const QString& key)
 {
     QFileInfo fileInfo(inFile);
-    QString outputPath = fileInfo.path() + "decrypted_file.txt";  // Adjust the output file name as needed
+    QString outputPath = fileInfo.path() + "/decrypted_file.txt";  // Adjust the output file name as needed
     QString command = "openssl enc -aes-256-cbc -d -pbkdf2 -in \"" + inFile + "\" -out \"" + outputPath + "\" -k \"" + key + "\"";
 
     // Run the command using QProcess

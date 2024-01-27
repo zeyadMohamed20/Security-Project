@@ -13,7 +13,7 @@ SixthWindow::SixthWindow(QWidget *parent)
     setWindowTitle("Encrypt & Sign Configuration");
 
     // Set the application icon (logo)
-    QIcon appIcon(":/logo.png"); // Adjust the path accordingly
+    QIcon appIcon(":assets/Icons/logo.jpg"); // Adjust the path accordingly
     setWindowIcon(appIcon);
 
     // Set up layout for the sixth window using QGridLayout
@@ -23,7 +23,7 @@ SixthWindow::SixthWindow(QWidget *parent)
 
     // Background Image
     QLabel* backgroundImage = new QLabel(this);
-    QPixmap pixmap(":/walls.jpg");  // Adjust the path to your image
+    QPixmap pixmap(":assets/Icons/walls.jpg");  // Adjust the path to your image
     backgroundImage->setPixmap(pixmap);
     backgroundImage->setScaledContents(true);
 

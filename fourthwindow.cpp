@@ -18,7 +18,7 @@ FourthWindow::FourthWindow(QWidget *parent)
     setWindowTitle("Sign Configuration");
 
     // Set the application icon (logo)
-    QIcon appIcon(":/logo.png"); // Adjust the path accordingly
+    QIcon appIcon(":assets/Icons/logo.jpg"); // Adjust the path accordingly
     setWindowIcon(appIcon);
 
     // Set up layout for the fourth window using QGridLayout
@@ -28,7 +28,7 @@ FourthWindow::FourthWindow(QWidget *parent)
 
     // Background Image
     QLabel* backgroundImage = new QLabel(this);
-    QPixmap pixmap(":/walls.jpg");  // Adjust the path to your image
+    QPixmap pixmap(":assets/Icons/walls.jpg");  // Adjust the path to your image
     backgroundImage->setPixmap(pixmap);
     backgroundImage->setScaledContents(true);
 
@@ -156,11 +156,11 @@ void FourthWindow::finishClicked()
 void FourthWindow::sign(const QString& inFile)
 {
     QFileInfo fileInfo(inFile);
-    QString signaturePath = fileInfo.path() + "signature.sig";  // Adjust the signature file name as needed
+    QString signaturePath = fileInfo.path() + "/signature.sig";  // Adjust the signature file name as needed
 
     // Adjust the paths for the private key and public key
-    QString privateKeyPath = fileInfo.path() + "private.pem";
-    QString publicKeyPath = fileInfo.path() + "public.pem";
+    QString privateKeyPath = fileInfo.path() + "/private.pem";
+    QString publicKeyPath = fileInfo.path() + "/public.pem";
 
     // Construct the command
     QString command = "openssl pkeyutl -sign -in \"" + inFile + "\" -out \"" + signaturePath + "\" -inkey \"" + privateKeyPath + "\"";
@@ -186,7 +186,7 @@ void FourthWindow::sign(const QString& inFile)
 void FourthWindow::generateKey(const QString& inFile)
 {
     QFileInfo fileInfo(inFile);
-    QString outputPrivatePath = fileInfo.path() + "private.pem";  // Adjust the output file name as needed
+    QString outputPrivatePath = fileInfo.path() + "/private.pem";  // Adjust the output file name as needed
 
     // Generate RSA private key
     QString privateKeyCommand = "openssl genpkey -algorithm RSA -out \"" + outputPrivatePath + "\"";
@@ -200,7 +200,7 @@ void FourthWindow::generateKey(const QString& inFile)
     }
 
     // Generate RSA public key
-    QString outputPublicPath = fileInfo.path() + "public.pem";
+    QString outputPublicPath = fileInfo.path() + "/public.pem";
     QString publicKeyCommand = "openssl rsa -pubout -in \"" + outputPrivatePath + "\" -out \"" + outputPublicPath + "\"";
     QProcess publicKeyProcess;
     publicKeyProcess.start(publicKeyCommand);

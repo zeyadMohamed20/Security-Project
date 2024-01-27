@@ -12,7 +12,7 @@ SecondWindow::SecondWindow(QWidget *parent)
     setWindowTitle("EncryptAES Configuration");
 
     // Set the application icon (logo)
-    QIcon appIcon(":/logo.png"); // Adjust the path accordingly
+    QIcon appIcon(":assets/Icons/logo.jpg"); // Adjust the path accordingly
     setWindowIcon(appIcon);
 
     // Set up layout for the second window using QGridLayout
@@ -22,7 +22,7 @@ SecondWindow::SecondWindow(QWidget *parent)
 
     // Background Image
     QLabel* backgroundImage = new QLabel(this);
-    QPixmap pixmap(":/walls.jpg");  // Adjust the path to your image
+    QPixmap pixmap(":assets/Icons/walls.jpg");  // Adjust the path to your image
     backgroundImage->setPixmap(pixmap);
     backgroundImage->setScaledContents(true);
 
@@ -132,10 +132,14 @@ SecondWindow::~SecondWindow()
 void SecondWindow::browseFile()
 {
     // Update the member variable with the selected file path
-    selectedFilePath = QFileDialog::getOpenFileName(this, "Select File", QDir::homePath(), "Text files (*.txt)");
-    filePathLineEdit->setText(selectedFilePath);
-}
+    QString newSelectedFilePath = QFileDialog::getOpenFileName(this, "Select File", QDir::homePath(), "Text files (*.txt)");
 
+    // Check if the user selected a file
+    if (!newSelectedFilePath.isEmpty()) {
+        selectedFilePath = newSelectedFilePath;
+        filePathLineEdit->setText(selectedFilePath);
+    }
+}
 void SecondWindow::finishClicked()
 {
     // Check if both AES key and file path are entered
@@ -160,7 +164,7 @@ void SecondWindow::finishClicked()
 void SecondWindow::encrypt(const QString& inFile, const QString& key)
 {
     QFileInfo fileInfo(inFile);
-    QString outputPath = fileInfo.path() + "file.enc";
+    QString outputPath = fileInfo.path() + "/file.enc";
     QString command = "openssl enc -aes-256-cbc -salt -pbkdf2 -in \"" + inFile + "\" -out \"" + outputPath + "\" -k \"" + key + "\"";
 
     // Run the command using QProcess

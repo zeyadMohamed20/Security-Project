@@ -1,0 +1,9 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource>
+        <file>./assets/Icons/logo.jpg</file>
+    </qresource>
+    <qresource>
+        <file>./assets/Icons/walls.jpg</file> <!-- Replace with the actual path to your image -->
+    </qresource>
+</RCC>
